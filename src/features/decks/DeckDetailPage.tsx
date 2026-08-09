@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { useLazyCardByIdQuery } from '@/lib/scryfall/api'
 import { CardDetailModal } from '@/components/cards/CardDetailModal'
+import type { ScryfallCard } from '@/lib/types/card'
 import {
   deckRenamed,
   entryCommanderToggled,
@@ -27,7 +28,7 @@ export function DeckDetailPage() {
   const { deckId } = useParams()
   const decks = useAppSelector((state) => state.decks.lists)
   const dispatch = useAppDispatch()
-  const [fetchCard, { data: selectedCard, isFetching }] = useLazyCardByIdQuery()
+  const [fetchCard] = useLazyCardByIdQuery()
 
   const deck = findDeck(decks, deckId)
   const [renaming, setRenaming] = useState(false)
@@ -35,15 +36,26 @@ export function DeckDetailPage() {
   const [adding, setAdding] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selected, setSelected] = useState<{ id: string; card: ScryfallCard } | null>(null)
+  const [loadingCard, setLoadingCard] = useState<string | null>(null)
+  const requestedIdRef = useRef<string | null>(null)
 
-  function openCard(id: string) {
-    setSelectedId(id)
-    fetchCard(id)
+  async function openCard(id: string) {
+    requestedIdRef.current = id
+    // Drop the previous card's info immediately so the modal never shows stale data.
+    setSelected(null)
+    setLoadingCard(id)
+    const result = await fetchCard(id)
+    // Ignore stale responses: a newer card (or a close) superseded this one.
+    if (requestedIdRef.current !== id) return
+    setLoadingCard(null)
+    if (result.data) setSelected({ id, card: result.data })
   }
 
   function closeCard() {
-    setSelectedId(null)
+    requestedIdRef.current = null
+    setSelected(null)
+    setLoadingCard(null)
   }
 
   if (!deck) {
@@ -171,10 +183,8 @@ export function DeckDetailPage() {
           onClose={() => setExportOpen(false)}
         />
       )}
-      {selectedId && selectedCard && (
-        <CardDetailModal card={selectedCard} onClose={closeCard} />
-      )}
-      {selectedId && isFetching && !selectedCard && (
+      {selected && <CardDetailModal card={selected.card} onClose={closeCard} />}
+      {loadingCard && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-ink-950/70 backdrop-blur-sm" aria-hidden="true" />
           <p className="relative rounded-md border border-edge bg-ink-800 px-4 py-3 text-sm text-muted">
