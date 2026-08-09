@@ -9,7 +9,7 @@ import { entriesMerged, deckCreated, type ImportAddition } from '../decksSlice'
 import { toDeckCard } from '../model'
 import { parseMoxfieldText } from '../import/parser'
 
-type Phase = 'input' | 'resolving' | 'done'
+type Phase = 'input' | 'resolving' | 'error' | 'done'
 type Target = { mode: 'new'; name: string; format?: DeckFormat } | { mode: 'existing'; deckId: string }
 
 function makeId(): string {
@@ -47,8 +47,7 @@ export function ImportDeckDialog({ onClose }: Props) {
 
     const result = await resolveCards(names)
     if (result.error) {
-      setReport({ addedCards: 0, missing: names })
-      setPhase('done')
+      setPhase('error')
       return
     }
 
@@ -188,6 +187,16 @@ export function ImportDeckDialog({ onClose }: Props) {
             )}
           </div>
 
+          {phase === 'error' && (
+            <div className="rounded-md border border-bad/40 bg-bad/10 px-4 py-3 text-sm">
+              <p className="font-medium text-bad">Couldn't reach Scryfall.</p>
+              <p className="mt-1 text-muted">
+                The batch card lookup appears to be having issues right now — this is not a problem
+                with your decklist. Your text is still here, so try again in a moment.
+              </p>
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
@@ -197,7 +206,11 @@ export function ImportDeckDialog({ onClose }: Props) {
               disabled={totalCards === 0 || phase === 'resolving'}
               onClick={handleImport}
             >
-              {phase === 'resolving' ? 'Resolving…' : `Import ${totalCards} cards`}
+              {phase === 'resolving'
+                ? 'Resolving…'
+                : phase === 'error'
+                  ? 'Try again'
+                  : `Import ${totalCards} cards`}
             </Button>
           </div>
         </div>
