@@ -100,7 +100,11 @@ export function EntryRow({
           type="number"
           min={1}
           value={entry.count}
-          onChange={(event) => onCountChange(Number(event.target.value))}
+          onChange={(event) => {
+            const count = Number(event.target.value)
+            if (!Number.isFinite(count) || count < 1) return
+            onCountChange(Math.round(count))
+          }}
           aria-label={`Count of ${entry.name}`}
           className="w-8 rounded-md border border-edge bg-ink-700 py-1 text-center text-sm text-text [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none sm:w-10"
         />

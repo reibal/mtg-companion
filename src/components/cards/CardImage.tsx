@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { CardImageUris, ScryfallCard } from '@/lib/types/card'
 
 type ImageSize = keyof CardImageUris
@@ -16,12 +17,23 @@ function pickImage(card: ScryfallCard, size: ImageSize): string | undefined {
 
 export function CardImage({ card, size, className, alt }: Props) {
   const src = pickImage(card, size)
-  if (!src) {
+  const [failedSrc, setFailedSrc] = useState('')
+
+  if (!src || failedSrc === src) {
     return (
       <div className={`flex items-center justify-center bg-ink-700 text-center text-xs text-faint ${className ?? ''}`}>
         {card.name}
       </div>
     )
   }
-  return <img src={src} alt={alt ?? card.name} loading="lazy" draggable={false} className={className} />
+  return (
+    <img
+      src={src}
+      alt={alt ?? card.name}
+      loading="lazy"
+      draggable={false}
+      onError={() => setFailedSrc(src)}
+      className={className}
+    />
+  )
 }

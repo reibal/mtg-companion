@@ -24,18 +24,12 @@ export function useCardSearch() {
     setSubmitted(term.trim())
   }, [])
 
-  const reset = useCallback(() => {
-    setDraft('')
-    setSubmitted('')
-  }, [])
-
   return {
     draft,
     setDraft,
     suggestions,
     cards,
     submit,
-    reset,
     isSearching: search.isLoading,
     hasSearched: submitted !== '',
     total: search.data?.pages[0]?.total ?? null,

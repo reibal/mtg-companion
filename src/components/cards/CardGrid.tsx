@@ -19,7 +19,7 @@ export function CardGrid({ cards, onSelect }: Props) {
           >
             <CardImage
               card={card}
-              size="normal"
+              size="small"
               className="aspect-[63/88] w-full rounded-md border border-edge object-cover transition group-hover:border-gold/70"
             />
             <p className="mt-1.5 truncate text-xs text-muted group-hover:text-text" title={card.name}>

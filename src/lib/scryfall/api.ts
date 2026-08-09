@@ -126,9 +126,7 @@ function lookupName(name: string): string {
 export const {
   useAutocompleteQuery,
   useSearchCardsInfiniteQuery,
-  useCardByIdQuery,
   useLazyCardByIdQuery,
-  useNamedCardQuery,
   useLazyNamedCardQuery,
   useResolveCardsMutation,
 } = scryfallApi
