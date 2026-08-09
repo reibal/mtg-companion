@@ -10,6 +10,7 @@ import {
 } from './decksSlice'
 import { findDeck } from './model'
 import { AddCardModal } from './components/AddCardModal'
+import { ScannerModal } from './scanner/ScannerModal'
 import { DeckStatsPanel } from './components/DeckStatsPanel'
 import { EntryRow } from './components/EntryRow'
 import { Button } from '@/components/ui/Button'
@@ -26,6 +27,7 @@ export function DeckDetailPage() {
   const [renaming, setRenaming] = useState(false)
   const [nameDraft, setNameDraft] = useState('')
   const [adding, setAdding] = useState(false)
+  const [scanning, setScanning] = useState(false)
 
   if (!deck) {
     return (
@@ -83,6 +85,10 @@ export function DeckDetailPage() {
           <Icon name="plus" className="h-4 w-4" />
           Add cards
         </Button>
+        <Button variant="secondary" onClick={() => setScanning(true)}>
+          <Icon name="scan" className="h-4 w-4" />
+          Scan
+        </Button>
       </header>
 
       <DeckStatsPanel deck={deck} />
@@ -127,6 +133,7 @@ export function DeckDetailPage() {
       </div>
 
       {adding && <AddCardModal deckId={deck.id} onClose={() => setAdding(false)} />}
+      {scanning && <ScannerModal deckId={deck.id} onClose={() => setScanning(false)} />}
     </section>
   )
 }
