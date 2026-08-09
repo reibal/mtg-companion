@@ -131,7 +131,7 @@ export function ScannerModal({ deckId, onClose }: Props) {
           ))}
         </div>
 
-        <div className="relative mx-auto aspect-3/4 h-[65dvh] max-w-full overflow-hidden rounded-lg border border-edge bg-ink-950">
+        <div className="relative mx-auto aspect-3/4 h-[55dvh] max-w-full overflow-hidden rounded-lg border border-edge bg-ink-950 sm:h-[65dvh]">
           <video
             ref={camera.videoRef}
             playsInline

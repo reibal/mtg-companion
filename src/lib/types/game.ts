@@ -9,9 +9,6 @@ export interface Player {
   id: string
   name: string
   life: number
-  poison: number
-  /** Commander damage dealt *to* this player, keyed by the attacker's player id. */
-  commanderDamage: Record<string, number>
 }
 
 export interface GameState {

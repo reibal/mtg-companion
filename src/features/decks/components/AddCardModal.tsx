@@ -42,7 +42,7 @@ export function AddCardModal({ deckId, onClose }: Props) {
 
   return (
     <Modal title="Add cards" onClose={onClose}>
-      <div className="flex h-[80dvh] flex-col gap-4">
+      <div className="flex h-[70dvh] flex-col gap-4 sm:h-[80dvh]">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-muted">Add to:</span>
           {DECK_ZONES.map((candidate: DeckZone) => (

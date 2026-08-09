@@ -7,13 +7,13 @@ const TOOLS: Tool[] = [
   {
     title: 'Cards Database',
     blurb: 'Search any card and read its full rules text.',
-    icon: 'cards',
+    icon: 'card',
     href: '/cards',
   },
   {
     title: 'Deck Manager',
     blurb: 'Build decks, mark commanders, track your wishlist.',
-    icon: 'crown',
+    icon: 'cards',
     href: '/decks',
   },
   {
@@ -28,7 +28,7 @@ export function HomePage() {
   return (
     <section className="space-y-10">
       <div className="space-y-3">
-        <h1 className="font-display text-3xl tracking-wide">
+        <h1 className="font-display text-2xl leading-snug tracking-wide sm:text-3xl">
           Your companion for the <span className="text-gold">game table</span>.
         </h1>
         <p className="max-w-xl text-muted">

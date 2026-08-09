@@ -8,7 +8,7 @@ import { CardDetail } from '@/components/cards/CardDetail'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 
-const QUICK_STARTERS = ['Lightning Bolt', 'Sol Ring', 'Counterspell', 'Ragavan, Nimble Pilferer']
+const QUICK_STARTERS = ['Sol Ring', 'Counterspell', 'Millikin']
 
 export function CardsPage() {
   const search = useCardSearch()

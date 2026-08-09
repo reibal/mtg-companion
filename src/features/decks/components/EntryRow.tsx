@@ -34,7 +34,7 @@ export function EntryRow({
 
   return (
     <li
-      className={`flex items-center gap-3 rounded-md border px-3 py-2 ${
+      className={`flex items-center gap-2 rounded-md border px-2 py-2 sm:gap-3 sm:px-3 ${
         isCommander
           ? 'border-arcane/50 bg-arcane/10'
           : 'border-edge bg-ink-800'
@@ -46,11 +46,11 @@ export function EntryRow({
             src={entry.image}
             alt=""
             loading="lazy"
-            className="h-14 w-10 shrink-0 rounded-[3px] object-cover transition-opacity hover:opacity-80"
+            className="h-12 w-8 shrink-0 rounded-[3px] object-cover transition-opacity hover:opacity-80 sm:h-14 sm:w-10"
           />
         </button>
       ) : (
-        <div className="flex h-14 w-10 shrink-0 items-center justify-center rounded-[3px] bg-ink-700 text-[9px] text-faint">
+        <div className="flex h-12 w-8 shrink-0 items-center justify-center rounded-[3px] bg-ink-700 text-[8px] text-faint sm:h-14 sm:w-10 sm:text-[9px]">
           {entry.name}
         </div>
       )}
@@ -65,16 +65,16 @@ export function EntryRow({
           {entry.colors?.map((color) => (
             <span
               key={color}
-              className="size-3 rounded-full"
+              className="size-2.5 rounded-full sm:size-3"
               title={color}
               style={{ backgroundColor: MANA_COLORS[color] }}
             />
           ))}
-          {entry.cmc !== undefined && <span className="text-xs text-faint">CMC {entry.cmc}</span>}
+          {entry.cmc !== undefined && <span className="text-[11px] text-faint sm:text-xs">CMC {entry.cmc}</span>}
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
         {showCommander && (
           <button
             type="button"
@@ -102,7 +102,7 @@ export function EntryRow({
           value={entry.count}
           onChange={(event) => onCountChange(Number(event.target.value))}
           aria-label={`Count of ${entry.name}`}
-          className="w-10 rounded-md border border-edge bg-ink-700 py-1 text-center text-sm text-text [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+          className="w-8 rounded-md border border-edge bg-ink-700 py-1 text-center text-sm text-text [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none sm:w-10"
         />
         <button
           type="button"

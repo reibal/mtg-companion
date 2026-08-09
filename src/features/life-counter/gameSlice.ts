@@ -18,8 +18,6 @@ function makePlayer(mode: GameMode): Player {
     id: makeId(),
     name: 'Player',
     life: STARTING_LIFE[mode],
-    poison: 0,
-    commanderDamage: {},
   }
 }
 
@@ -35,60 +33,26 @@ const gameSlice = createSlice({
         name: `Player ${index + 1}`,
       }))
     },
+    gameEnded(state) {
+      state.players = []
+    },
     playerNameChanged(state, action: PayloadAction<{ id: string; name: string }>) {
       const player = state.players.find((p) => p.id === action.payload.id)
       if (player) player.name = action.payload.name.trim() || player.name
-    },
-    playerAdded(state) {
-      if (state.players.length >= MAX_PLAYERS) return
-      const player = makePlayer(state.mode)
-      player.name = `Player ${state.players.length + 1}`
-      state.players.push(player)
-    },
-    playerRemoved(state, action: PayloadAction<string>) {
-      if (state.players.length <= MIN_PLAYERS) return
-      const index = state.players.findIndex((p) => p.id === action.payload)
-      if (index !== -1) {
-        state.players.splice(index, 1)
-        // Clean up dangling commander-damage references to the removed player.
-        for (const p of state.players) {
-          delete p.commanderDamage[action.payload]
-        }
-      }
     },
     lifeChanged(state, action: PayloadAction<{ id: string; delta: number }>) {
       const player = state.players.find((p) => p.id === action.payload.id)
       if (!player) return
       player.life = Math.max(0, player.life + action.payload.delta)
     },
-    lifeSet(state, action: PayloadAction<{ id: string; value: number }>) {
-      const player = state.players.find((p) => p.id === action.payload.id)
-      if (!player) return
-      player.life = Math.max(0, action.payload.value)
-    },
-    poisonChanged(state, action: PayloadAction<{ id: string; delta: number }>) {
-      const player = state.players.find((p) => p.id === action.payload.id)
-      if (!player) return
-      player.poison = Math.max(0, player.poison + action.payload.delta)
-    },
-    commanderDamageChanged(state, action: PayloadAction<{ fromId: string; toId: string; delta: number }>) {
-      const { fromId, toId, delta } = action.payload
-      const victim = state.players.find((p) => p.id === toId)
-      if (!victim) return
-      victim.commanderDamage[fromId] = Math.max(0, (victim.commanderDamage[fromId] ?? 0) + delta)
-    },
   },
 })
 
 export const {
   gameStarted,
+  gameEnded,
   playerNameChanged,
-  playerAdded,
-  playerRemoved,
   lifeChanged,
-  lifeSet,
-  poisonChanged,
-  commanderDamageChanged,
 } = gameSlice.actions
 
 export default gameSlice.reducer

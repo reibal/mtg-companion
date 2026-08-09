@@ -86,30 +86,32 @@ export function DeckDetailPage() {
             className="max-w-sm flex-1 rounded-md border border-edge bg-ink-800 px-3 py-1.5 font-display text-xl text-text focus:border-gold/60"
           />
         ) : (
-          <h1 className="flex items-center gap-2 font-display text-2xl text-text">
-            {deck.name}
+          <h1 className="flex min-w-0 flex-1 items-center gap-2 font-display text-xl text-text sm:text-2xl">
+            <span className="truncate">{deck.name}</span>
             <button
               type="button"
               onClick={startRename}
               aria-label="Rename deck"
-              className="rounded-md p-1 text-faint hover:bg-ink-800 hover:text-text"
+              className="shrink-0 rounded-md p-1 text-faint hover:bg-ink-800 hover:text-text"
             >
               <Icon name="edit" className="h-4 w-4" />
             </button>
           </h1>
         )}
-        <Button onClick={() => setAdding(true)} className="ml-auto">
-          <Icon name="plus" className="h-4 w-4" />
-          Add cards
-        </Button>
-        <Button variant="secondary" onClick={() => setScanning(true)}>
-          <Icon name="scan" className="h-4 w-4" />
-          Scan
-        </Button>
-        <Button variant="ghost" onClick={() => setExportOpen(true)}>
-          <Icon name="dots" className="h-4 w-4" />
-          Export
-        </Button>
+        <div className="ml-auto flex flex-wrap gap-2">
+          <Button onClick={() => setAdding(true)}>
+            <Icon name="plus" className="h-4 w-4" />
+            Add cards
+          </Button>
+          <Button variant="secondary" onClick={() => setScanning(true)}>
+            <Icon name="scan" className="h-4 w-4" />
+            Scan
+          </Button>
+          <Button variant="ghost" onClick={() => setExportOpen(true)}>
+            <Icon name="dots" className="h-4 w-4" />
+            Export
+          </Button>
+        </div>
       </header>
 
       <DeckStatsPanel deck={deck} />

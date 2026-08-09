@@ -8,6 +8,17 @@ const ICON_PATHS: Record<string, ReactNode> = {
       <path d="M9.5 20v-5h5v5" />
     </>
   ),
+  card: (
+    <>
+      <rect x="5" y="3.5" width="14" height="17" rx="1.5" />
+      <path d="M8.5 6.5h7" strokeWidth={1} />
+      <rect x="8.5" y="9.25" width="7" height="4.5" rx="1" strokeWidth={0.95} />
+      <g strokeWidth={0.85}>
+        <path d="M8.5 16h7" />
+        <path d="M8.5 18h7" />
+      </g>
+    </>
+  ),
   cards: (
     <>
       <path d="m12 3 8 4.5-8 4.5-8-4.5Z" />

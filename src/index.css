@@ -1,5 +1,14 @@
 @import 'tailwindcss';
 
+@keyframes life-pop {
+  0% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 @theme {
   --color-ink-950: #0b0e17;
   --color-ink-900: #10131f;

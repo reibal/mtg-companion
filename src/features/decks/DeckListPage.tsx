@@ -23,7 +23,7 @@ export function DeckListPage() {
 
   return (
     <section className="space-y-6">
-      <header className="flex items-center justify-between gap-4">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl text-text">Decks</h1>
           <p className="text-sm text-muted">Your decks and wishlists.</p>
