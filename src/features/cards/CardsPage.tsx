@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { useAutocompleteQuery, useSearchCardsInfiniteQuery } from '@/lib/scryfall'
 import type { ScryfallCard } from '@/lib/types/card'
-import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { useCardSearch } from '@/hooks/useCardSearch'
 import { CardSearchInput } from '@/components/cards/CardSearchInput'
 import { CardGrid } from '@/components/cards/CardGrid'
 import { CardGridSkeleton } from '@/components/cards/CardGridSkeleton'
@@ -12,26 +11,8 @@ import { Button } from '@/components/ui/Button'
 const QUICK_STARTERS = ['Lightning Bolt', 'Sol Ring', 'Counterspell', 'Ragavan, Nimble Pilferer']
 
 export function CardsPage() {
-  const [draft, setDraft] = useState('')
-  const [submitted, setSubmitted] = useState('')
+  const search = useCardSearch()
   const [selected, setSelected] = useState<ScryfallCard | null>(null)
-
-  const query = draft.trim()
-  const debounced = useDebouncedValue(query, 250)
-
-  const { data: suggestions = [] } = useAutocompleteQuery(debounced, {
-    skip: debounced.length === 0,
-  })
-
-  const search = useSearchCardsInfiniteQuery({ q: submitted }, { skip: submitted === '' })
-
-  const cards = search.data?.pages.flatMap((page) => page.cards) ?? []
-  const total = search.data?.pages[0]?.total ?? null
-
-  const handleSubmit = (term: string) => {
-    setDraft(term)
-    setSubmitted(term.trim())
-  }
 
   return (
     <section className="space-y-6">
@@ -41,47 +22,43 @@ export function CardsPage() {
       </header>
 
       <CardSearchInput
-        value={draft}
-        onValueChange={setDraft}
-        suggestions={suggestions}
-        onSubmit={handleSubmit}
+        value={search.draft}
+        onValueChange={search.setDraft}
+        suggestions={search.suggestions}
+        onSubmit={search.submit}
         placeholder="Search a Magic card…"
       />
 
-      {submitted === '' && (
+      {!search.hasSearched && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-faint">Try:</span>
           {QUICK_STARTERS.map((term) => (
-            <Button key={term} variant="secondary" onClick={() => handleSubmit(term)} className="px-3 py-1.5 text-xs">
+            <Button key={term} variant="secondary" onClick={() => search.submit(term)} className="px-3 py-1.5 text-xs">
               {term}
             </Button>
           ))}
         </div>
       )}
 
-      {submitted !== '' && search.isError && (
+      {search.hasSearched && search.isError && (
         <div className="rounded-md border border-bad/40 bg-bad/10 px-4 py-3 text-sm text-bad">
           Something went wrong while searching. Check your connection and try again.
         </div>
       )}
 
-      {submitted !== '' && search.isLoading && <CardGridSkeleton />}
+      {search.isSearching && search.cards.length === 0 && <CardGridSkeleton />}
 
-      {submitted !== '' && !search.isLoading && cards.length === 0 && (
-        <p className="py-12 text-center text-sm text-muted">No cards found for “{submitted}”.</p>
+      {search.hasSearched && !search.isSearching && search.cards.length === 0 && (
+        <p className="py-12 text-center text-sm text-muted">No cards found for “{search.draft}”.</p>
       )}
 
-      {cards.length > 0 && (
+      {search.cards.length > 0 && (
         <>
-          <CardGrid cards={cards} onSelect={setSelected} />
-          <p className="text-xs text-faint">
-            {total !== null ? `${total} cards` : 'Results'}
-            {cards.length > 0 ? ` · showing ${cards.length}` : ''}
-          </p>
+          <CardGrid cards={search.cards} onSelect={setSelected} />
           {search.hasNextPage && (
             <div className="flex justify-center">
-              <Button variant="secondary" onClick={search.fetchNextPage} disabled={search.isFetchingNextPage}>
-                {search.isFetchingNextPage ? 'Loading…' : 'Load more'}
+              <Button variant="secondary" onClick={search.loadMore} disabled={search.isLoadMore}>
+                {search.isLoadMore ? 'Loading…' : 'Load more'}
               </Button>
             </div>
           )}

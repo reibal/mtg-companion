@@ -65,10 +65,12 @@ src/
 
 ## Feature spec
 
-- **Cards DB** `@/`cards`: typeahead (autocomplete) → art grid → detail modal (cost, type, oracle text, set, rarity, prices, legalities, related/rulings). Cached through RTK Query.
+- **Cards DB** `/cards`: typeahead (autocomplete) → art grid → detail modal (cost, type, oracle text, set, rarity, prices, legalities, related/rulings). Cached through RTK Query.
 - **Decks** `/decks`, `/decks/:deckId` — normalized entries per zone, quantity steppers, ≤2 commanders enforced in slice, stats (total, mana curve, color identity breakdown).
 - **Scanner** (inside a deck) — camera → frame → OCR name → fuzzy match → show candidate art → confirm → add to chosen zone. Graceful no-camera / no-match states.
 - **Life Counter** `/life` — start (normal 20 / Commander 40, 2–4 players), ± controls, per-pair commander damage matrix, poison, rename/add/remove, reset.
+- **Import (Moxfield)** — paste a Moxfield deck/collection text export into the Deck Manager → parse zones (Main / Sideboard / Maybeboard) → batch-resolve card names via Scryfall `/cards/collection` → create a new deck or merge into an existing one. Unguessable/failed names are reported, not silently dropped.
+- **Responsiveness** — the app must be usable and comfortable on desktop, tablet, and phone (portrait life-counter use in particular).
 - **Home** `/` — shortcut tiles to the three tools.
 
 ## Build order (gate: `pnpm lint && pnpm build` + manual dev check each phase)
@@ -79,7 +81,8 @@ src/
 4. Deck Manager (incl. shared card components).
 5. Life Counter.
 6. Scanner (camera + OCR + confirm flow).
-7. Polish — empty states, error boundaries, a11y pass, remove Vite-boilerplate leftovers.
+7. Moxfield import — text-export parser (pure), `/cards/collection` batch resolver, import UI in decks.
+8. Polish + responsiveness — responsive audit (desktop/tablet/mobile, portrait life counter), touch targets, iPhone/high-DPI checks, empty states, error boundaries, a11y pass, remove Vite-boilerplate leftovers.
 
 ## Quality bar
 
