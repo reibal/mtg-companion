@@ -4,6 +4,7 @@ import type { RawCard, RawCardSearchResponse } from './raw'
 import { normalizeCard } from './normalize'
 
 const SCRYFALL_BASE_URL = 'https://api.scryfall.com'
+const COLLECTION_CHUNK_SIZE = 75
 
 export interface CardSearchArgs {
   q: string
@@ -48,17 +49,66 @@ export const scryfallApi = createApi({
       query: (id) => ({ url: `cards/${id}` }),
       transformResponse: (raw: RawCard) => normalizeCard(raw),
     }),
-    namedCard: build.query<ScryfallCard, string>({
+namedCard: build.query<ScryfallCard, string>({
       query: (name) => ({ url: 'cards/named', params: { fuzzy: name } }),
       transformResponse: (raw: RawCard) => normalizeCard(raw),
     }),
+    /**
+     * Resolve many card *names* at once via `/cards/collection` (≤75 per POST,
+     * chunked internally). Returns resolved cards in input order plus names
+     * Scryfall couldn't match exactly.
+     */
+    resolveCards: build.mutation<
+      { cards: ScryfallCard[]; missing: string[] },
+      string[]
+    >({
+      async queryFn(names, _api, _extraOptions, baseQuery) {
+        const unique = [...new Set(names.map((name) => name.trim()).filter(Boolean))]
+        const cards: ScryfallCard[] = []
+        const missing: string[] = []
+
+        for (let offset = 0; offset < unique.length; offset += COLLECTION_CHUNK_SIZE) {
+          const chunk = unique.slice(offset, offset + COLLECTION_CHUNK_SIZE)
+          const result = await baseQuery({
+            url: 'cards/collection',
+            method: 'POST',
+            body: { identifiers: chunk.map((name) => ({ name: lookupName(name) })) },
+          })
+          if (result.error) {
+            return { error: result.error }
+          }
+          const body = result.data as {
+            data?: RawCard[]
+            not_found?: { name?: string }[] | string[]
+          }
+          cards.push(...(body.data ?? []).map(normalizeCard))
+          for (const item of body.not_found ?? []) {
+            missing.push(typeof item === 'string' ? item : (item.name ?? ''))
+          }
+        }
+
+        return { data: { cards, missing } }
+      },
+    }),
   }),
 })
+
+/**
+ * Scryfall's `/cards/collection` name match rejects the `//` full name of
+ * double-faced cards but accepts the front-face name. Strip the back face for
+ * the lookup so MDFCs resolve.
+ */
+function lookupName(name: string): string {
+  const marker = name.indexOf(' // ')
+  return marker === -1 ? name : name.slice(0, marker)
+}
 
 export const {
   useAutocompleteQuery,
   useSearchCardsInfiniteQuery,
   useCardByIdQuery,
+  useLazyCardByIdQuery,
   useNamedCardQuery,
   useLazyNamedCardQuery,
+  useResolveCardsMutation,
 } = scryfallApi

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { CardSearchInput } from '@/components/cards/CardSearchInput'
@@ -20,16 +20,29 @@ type Props = {
 export function AddCardModal({ deckId, onClose }: Props) {
   const dispatch = useAppDispatch()
   const [zone, setZone] = useState<DeckZone>('main')
+  const [pendingCard, setPendingCard] = useState<ScryfallCard | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimer = useRef<number | null>(null)
   const search = useCardSearch()
 
-  function handleAdd(card: ScryfallCard) {
+  useEffect(
+    () => () => {
+      if (toastTimer.current) window.clearTimeout(toastTimer.current)
+    },
+    [],
+  )
+
+  function confirmAdd(card: ScryfallCard) {
     dispatch(entryAdded({ deckId, zone, card: toDeckCard(card) }))
-    onClose()
+    setPendingCard(null)
+    setToast(`Added ${card.name} to ${DECK_ZONE_LABELS[zone].toLowerCase()}.`)
+    if (toastTimer.current) window.clearTimeout(toastTimer.current)
+    toastTimer.current = window.setTimeout(() => setToast(null), 2000)
   }
 
   return (
     <Modal title="Add cards" onClose={onClose}>
-      <div className="space-y-4">
+      <div className="flex h-[80dvh] flex-col gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-muted">Add to:</span>
           {DECK_ZONES.map((candidate: DeckZone) => (
@@ -37,7 +50,8 @@ export function AddCardModal({ deckId, onClose }: Props) {
               key={candidate}
               type="button"
               onClick={() => setZone(candidate)}
-              className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+              disabled={pendingCard !== null}
+              className={`rounded-md px-3 py-1.5 text-sm transition-colors disabled:opacity-50 ${
                 zone === candidate
                   ? 'bg-gold text-ink-950'
                   : 'border border-edge bg-ink-700 text-muted hover:text-text'
@@ -53,35 +67,64 @@ export function AddCardModal({ deckId, onClose }: Props) {
           onValueChange={search.setDraft}
           suggestions={search.suggestions}
           onSubmit={search.submit}
-          placeholder={zone === 'main' ? 'Add cards to the mainboard…' : `Add cards to the ${DECK_ZONE_LABELS[zone].toLowerCase()}…`}
+          placeholder={
+            zone === 'main'
+              ? 'Add cards to the mainboard…'
+              : `Add cards to the ${DECK_ZONE_LABELS[zone].toLowerCase()}…`
+          }
         />
 
-        {search.isSearching && search.cards.length === 0 && <CardGridSkeleton />}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {search.isSearching && search.cards.length === 0 && <CardGridSkeleton />}
 
-        {search.hasSearched && !search.isSearching && search.cards.length === 0 && (
-          <p className="py-8 text-center text-sm text-muted">No cards found for “{search.draft}”.</p>
-        )}
+          {search.hasSearched && !search.isSearching && search.cards.length === 0 && (
+            <p className="py-8 text-center text-sm text-muted">No cards found for “{search.draft}”.</p>
+          )}
 
-        {search.isError && (
-          <p className="rounded-md border border-bad/40 bg-bad/10 px-4 py-3 text-sm text-bad">
-            Something went wrong while searching.
-          </p>
-        )}
+          {search.isError && (
+            <p className="rounded-md border border-bad/40 bg-bad/10 px-4 py-3 text-sm text-bad">
+              Something went wrong while searching.
+            </p>
+          )}
 
-        {search.cards.length > 0 && (
-          <CardGrid cards={search.cards} onSelect={handleAdd} />
-        )}
+          {search.cards.length > 0 && (
+            <CardGrid cards={search.cards} onSelect={setPendingCard} />
+          )}
 
-        {search.hasNextPage && (
-          <div className="flex justify-center">
-            <Button variant="secondary" onClick={search.loadMore} disabled={search.isLoadMore}>
-              {search.isLoadMore ? 'Loading…' : 'Load more'}
-            </Button>
-          </div>
-        )}
+          {search.hasNextPage && (
+            <div className="flex justify-center py-3">
+              <Button variant="secondary" onClick={search.loadMore} disabled={search.isLoadMore}>
+                {search.isLoadMore ? 'Loading…' : 'Load more'}
+              </Button>
+            </div>
+          )}
+        </div>
 
-        <p className="text-xs text-faint">Click a card to add one copy. Up to two commanders can be marked in the deck.</p>
+        <p className="shrink-0 text-xs text-faint">
+          Click a card to add one copy. Up to two commanders can be marked in the deck.
+        </p>
       </div>
+
+      {pendingCard && (
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-4 border-t border-edge bg-ink-800 px-5 py-3">
+          <p className="text-sm text-text">
+            Add <span className="font-semibold text-gold">{pendingCard.name}</span> to{' '}
+            {DECK_ZONE_LABELS[zone].toLowerCase()}?
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => setPendingCard(null)}>
+              Cancel
+            </Button>
+            <Button onClick={() => confirmAdd(pendingCard)}>Add</Button>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <p className="absolute inset-x-0 bottom-0 z-10 border-t border-good/40 bg-ink-800 px-5 py-3 text-center text-sm text-good">
+          {toast}
+        </p>
+      )}
     </Modal>
   )
 }

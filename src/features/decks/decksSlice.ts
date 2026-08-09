@@ -1,10 +1,17 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import type { Deck, DeckCard, DeckZone } from '@/lib/types/deck'
+import type { Deck, DeckCard, DeckEntry, DeckZone } from '@/lib/types/deck'
 import { createEmptyDeck } from '@/lib/types/deck'
 import { loadJSON } from '@/lib/storage'
 import { localStoragePort, storageKeys } from '@/lib/storage'
 
 import type { DeckFormat } from '@/lib/types/deck'
+
+/** One resolved card to merge during an import, with the quantity to add. */
+export interface ImportAddition {
+  card: DeckCard
+  count: number
+  commander?: boolean
+}
 
 interface DecksState {
   lists: Deck[]
@@ -23,9 +30,12 @@ const decksSlice = createSlice({
   name: 'decks',
   initialState,
   reducers: {
-    deckCreated(state, action: PayloadAction<{ name: string; format?: DeckFormat }>) {
-      const { name, format } = action.payload
-      state.lists.push(createEmptyDeck(makeId(), name, format))
+    deckCreated(
+      state,
+      action: PayloadAction<{ name: string; format?: DeckFormat; id?: string }>,
+    ) {
+      const { name, format, id } = action.payload
+      state.lists.push(createEmptyDeck(id ?? makeId(), name, format))
     },
     deckRenamed(state, action: PayloadAction<{ id: string; name: string }>) {
       const deck = state.lists.find((d) => d.id === action.payload.id)
@@ -95,6 +105,36 @@ const decksSlice = createSlice({
       }
       deck.updatedAt = Date.now()
     },
+    entriesMerged(
+      state,
+      action: PayloadAction<{ deckId: string; zones: Partial<Record<DeckZone, ImportAddition[]>> }>,
+    ) {
+      const { deckId, zones } = action.payload
+      const deck = state.lists.find((d) => d.id === deckId)
+      if (!deck) return
+
+      let commanderSlots = 2 - deck.zones.main.filter((entry) => entry.commander).length
+
+      for (const [zoneKey, additions] of Object.entries(zones) as [
+        DeckZone,
+        ImportAddition[],
+      ][]) {
+        if (!additions) continue
+        for (const addition of additions) {
+          const existing = deck.zones[zoneKey].find((entry) => entry.id === addition.card.id)
+          if (existing) {
+            existing.count += addition.count
+            if (addition.commander && commanderSlots > 0) existing.commander = true
+          } else {
+            const entry: DeckEntry = { ...addition.card, count: addition.count }
+            if (addition.commander && commanderSlots > 0) entry.commander = true
+            deck.zones[zoneKey].push(entry)
+          }
+          if (addition.commander) commanderSlots--
+        }
+      }
+      deck.updatedAt = Date.now()
+    },
     entryCommanderToggled(state, action: PayloadAction<{ deckId: string; entryId: string }>) {
       const { deckId, entryId } = action.payload
       const deck = state.lists.find((d) => d.id === deckId)
@@ -114,6 +154,30 @@ const decksSlice = createSlice({
       }
       deck.updatedAt = Date.now()
     },
+    entryMoved(
+      state,
+      action: PayloadAction<{ deckId: string; from: DeckZone; to: DeckZone; entryId: string }>,
+    ) {
+      const { deckId, from, to, entryId } = action.payload
+      const deck = state.lists.find((d) => d.id === deckId)
+      if (!deck) return
+      if (from === to) return
+      const index = deck.zones[from].findIndex((entry) => entry.id === entryId)
+      if (index === -1) return
+      const [moved] = deck.zones[from].splice(index, 1)
+      if (!moved) return
+
+      // Commander status is only meaningful in the main zone.
+      moved.commander = false
+
+      const existing = deck.zones[to].find((entry) => entry.id === moved.id)
+      if (existing) {
+        existing.count += moved.count
+      } else {
+        deck.zones[to].push(moved)
+      }
+      deck.updatedAt = Date.now()
+    },
   },
 })
 
@@ -126,6 +190,8 @@ export const {
   entryCountChanged,
   entryCountSet,
   entryCommanderToggled,
+  entriesMerged,
+  entryMoved,
 } = decksSlice.actions
 
 export default decksSlice.reducer

@@ -96,3 +96,17 @@ src/
 - No auth/server; localStorage only until production DB.
 - No offline/PWA (possible later).
 - No legality enforcement, no arena integration.
+
+## Possible future improvements
+
+- **Server-side OCR (Netlify Function + Google Cloud Vision)** — the client-side
+  `tesseract.js` pipeline (Phase 6) only recognizes razor-sharp, well-lit text and
+  hallucinates on blur/noise. Move OCR off the client to a standard Netlify Function
+  (`netlify/functions/ocr.ts` in this same repo — no separate project) that receives the
+  already-cropped name-image and returns `{ text, names }` using Google Cloud Vision API
+  (the same ML family as ML Kit; much more robust to blur/low light, free tier available).
+  Edge Functions (Deno) are unsuitable for this — must use a standard Node Function.
+  Requires a GCP project + API key kept as a Netlify env var (never in the client), plus a
+  `netlify.toml` (none exists yet) and `netlify dev` for local development. Long-term
+  alternative: React Native + `react-native-vision-camera` + ML Kit/Vision for a true
+  camera-native scan experience — only if we commit to a mobile app.

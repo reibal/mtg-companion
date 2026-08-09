@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { deckDeleted } from './decksSlice'
 import { deckCreated } from './decksSlice'
 import { NewDeckDialog } from './components/NewDeckDialog'
+import { ImportDeckDialog } from './components/ImportDeckDialog'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import type { Deck } from '@/lib/types/deck'
@@ -12,6 +13,7 @@ export function DeckListPage() {
   const decks = useAppSelector((state) => state.decks.lists)
   const dispatch = useAppDispatch()
   const [showNew, setShowNew] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
   function handleCreate(name: string, format?: Deck['format']) {
@@ -26,10 +28,16 @@ export function DeckListPage() {
           <h1 className="font-display text-2xl text-text">Decks</h1>
           <p className="text-sm text-muted">Your decks and wishlists.</p>
         </div>
-        <Button onClick={() => setShowNew(true)}>
-          <Icon name="plus" className="h-4 w-4" />
-          New deck
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => setShowImport(true)}>
+            <Icon name="cards" className="h-4 w-4" />
+            Import
+          </Button>
+          <Button onClick={() => setShowNew(true)}>
+            <Icon name="plus" className="h-4 w-4" />
+            New deck
+          </Button>
+        </div>
       </header>
 
       {decks.length === 0 ? (
@@ -93,6 +101,7 @@ export function DeckListPage() {
       )}
 
       <NewDeckDialog open={showNew} onClose={() => setShowNew(false)} onCreate={handleCreate} />
+      {showImport && <ImportDeckDialog onClose={() => setShowImport(false)} />}
     </section>
   )
 }

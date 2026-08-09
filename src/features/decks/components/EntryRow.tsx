@@ -1,35 +1,54 @@
-import type { DeckEntry } from '@/lib/types/deck'
+import { useState } from 'react'
+import type { DeckEntry, DeckZone } from '@/lib/types/deck'
+import { DECK_ZONE_LABELS, DECK_ZONES } from '@/lib/types/deck'
 import { MANA_COLORS } from '@/lib/types/card'
 import { Icon } from '@/components/ui/Icon'
+import { Menu, MenuButton } from '@/components/ui/Menu'
 
 type Props = {
   entry: DeckEntry
-  title: string
+  zone: DeckZone
   showCommander: boolean
+  onOpen: () => void
   onCountDelta: (delta: number) => void
   onCountChange: (count: number) => void
   onToggleCommander: () => void
+  onMove: (target: DeckZone) => void
   onRemove: () => void
 }
 
 export function EntryRow({
   entry,
-  title,
+  zone,
   showCommander,
+  onOpen,
   onCountDelta,
   onCountChange,
   onToggleCommander,
+  onMove,
   onRemove,
 }: Props) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const isCommander = entry.commander ?? false
+  const moves = DECK_ZONES.filter((target) => target !== zone)
+
   return (
-    <li className="flex items-center gap-3 rounded-md border border-edge bg-ink-800 px-3 py-2">
+    <li
+      className={`flex items-center gap-3 rounded-md border px-3 py-2 ${
+        isCommander
+          ? 'border-arcane/50 bg-arcane/10'
+          : 'border-edge bg-ink-800'
+      }`}
+    >
       {entry.image ? (
-        <img
-          src={entry.image}
-          alt=""
-          loading="lazy"
-          className="h-14 w-10 shrink-0 rounded-[3px] object-cover"
-        />
+        <button type="button" onClick={onOpen} aria-label={`View ${entry.name}`} className="shrink-0">
+          <img
+            src={entry.image}
+            alt=""
+            loading="lazy"
+            className="h-14 w-10 shrink-0 rounded-[3px] object-cover transition-opacity hover:opacity-80"
+          />
+        </button>
       ) : (
         <div className="flex h-14 w-10 shrink-0 items-center justify-center rounded-[3px] bg-ink-700 text-[9px] text-faint">
           {entry.name}
@@ -37,9 +56,11 @@ export function EntryRow({
       )}
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm text-text" title={entry.name}>
-          {entry.name}
-        </p>
+        <button type="button" onClick={onOpen} className="block w-full text-left">
+          <p className="truncate text-sm text-text hover:text-gold" title={entry.name}>
+            {entry.name}
+          </p>
+        </button>
         <div className="mt-0.5 flex items-center gap-1.5">
           {entry.colors?.map((color) => (
             <span
@@ -91,15 +112,29 @@ export function EntryRow({
         >
           <Icon name="plus" className="h-4 w-4" />
         </button>
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label={`Remove ${entry.name}`}
-          title={title}
-          className="rounded-md p-1.5 text-faint hover:bg-ink-700 hover:text-bad"
-        >
-          <Icon name="trash" className="h-4 w-4" />
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={`Options for ${entry.name}`}
+            aria-expanded={menuOpen}
+            className="rounded-md p-1.5 text-faint hover:bg-ink-700 hover:text-text"
+          >
+            <Icon name="dots" className="h-4 w-4" />
+          </button>
+          {menuOpen && (
+            <Menu onClose={() => setMenuOpen(false)} align="right">
+              {moves.map((target) => (
+                <MenuButton key={target} onClick={() => { onMove(target); setMenuOpen(false) }}>
+                  Move to {DECK_ZONE_LABELS[target]}
+                </MenuButton>
+              ))}
+              <MenuButton danger onClick={() => { onRemove(); setMenuOpen(false) }}>
+                Delete
+              </MenuButton>
+            </Menu>
+          )}
+        </div>
       </div>
     </li>
   )
