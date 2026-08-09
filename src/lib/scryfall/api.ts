@@ -7,20 +7,12 @@ const SCRYFALL_BASE_URL = 'https://api.scryfall.com'
 
 export interface CardSearchArgs {
   q: string
-  page?: number
 }
 
-export interface CardSearchResult {
+export interface CardSearchPage {
   cards: ScryfallCard[]
   hasMore: boolean
   total: number | null
-  nextPage: number | null
-}
-
-function pageFromNextUri(nextPageUri?: string): number | null {
-  if (!nextPageUri) return null
-  const parsed = Number(new URL(nextPageUri).searchParams.get('page'))
-  return Number.isFinite(parsed) ? parsed : null
 }
 
 export const scryfallApi = createApi({
@@ -36,14 +28,21 @@ export const scryfallApi = createApi({
       query: (q) => ({ url: 'cards/autocomplete', params: { q } }),
       transformResponse: (response: { data: string[] }) => response.data,
     }),
-    searchCards: build.query<CardSearchResult, CardSearchArgs>({
-      query: ({ q, page }) => ({ url: 'cards/search', params: { q, page } }),
+    searchCards: build.infiniteQuery<CardSearchPage, CardSearchArgs, number>({
+      query: ({ queryArg, pageParam }) => ({
+        url: 'cards/search',
+        params: { q: queryArg.q, page: pageParam },
+      }),
       transformResponse: (response: RawCardSearchResponse) => ({
         cards: response.data.map(normalizeCard),
         hasMore: response.has_more,
         total: response.total_cards ?? null,
-        nextPage: pageFromNextUri(response.next_page),
       }),
+      infiniteQueryOptions: {
+        initialPageParam: 1,
+        getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+          lastPage.hasMore ? lastPageParam + 1 : undefined,
+      },
     }),
     cardById: build.query<ScryfallCard, string>({
       query: (id) => ({ url: `cards/${id}` }),
@@ -58,7 +57,7 @@ export const scryfallApi = createApi({
 
 export const {
   useAutocompleteQuery,
-  useSearchCardsQuery,
+  useSearchCardsInfiniteQuery,
   useCardByIdQuery,
   useNamedCardQuery,
 } = scryfallApi

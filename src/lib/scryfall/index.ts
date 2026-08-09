@@ -1,9 +1,9 @@
 export {
   scryfallApi,
   useAutocompleteQuery,
-  useSearchCardsQuery,
+  useSearchCardsInfiniteQuery,
   useCardByIdQuery,
   useNamedCardQuery,
 } from './api'
-export type { CardSearchArgs, CardSearchResult } from './api'
+export type { CardSearchArgs, CardSearchPage } from './api'
 export { normalizeCard } from './normalize'
