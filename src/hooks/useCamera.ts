@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export interface CameraState {
   videoRef: React.RefObject<HTMLVideoElement | null>
   running: boolean
   error: string | null
-  start: () => Promise<void>
+  start: () => Promise<boolean>
   stop: () => void
   capture: () => Promise<Blob | null>
 }
@@ -22,11 +22,11 @@ export function useCamera(): CameraState {
     setRunning(false)
   }, [])
 
-  const start = useCallback(async () => {
+  const start = useCallback(async (): Promise<boolean> => {
     setError(null)
     if (!navigator.mediaDevices?.getUserMedia) {
       setError('Camera support is not available on this device or connection (needs HTTPS).')
-      return
+      return false
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -39,14 +39,24 @@ export function useCamera(): CameraState {
         await videoRef.current.play().catch(() => undefined)
       }
       setRunning(true)
+      return true
     } catch {
       setError('Could not access the camera. Check permissions and try again.')
+      return false
     }
   }, [])
 
   const capture = useCallback(async (): Promise<Blob | null> => {
     const video = videoRef.current
-    if (!video || video.readyState < 2) return null
+    if (!video) return null
+    if (video.readyState < 2) {
+      try {
+        await video.play()
+      } catch {
+        return null
+      }
+      if (video.readyState < 2) return null
+    }
     const canvas = document.createElement('canvas')
     canvas.width = video.videoWidth
     canvas.height = video.videoHeight
@@ -60,5 +70,8 @@ export function useCamera(): CameraState {
 
   useEffect(() => stop, [stop])
 
-  return { videoRef, running, error, start, stop, capture }
+  return useMemo(
+    () => ({ videoRef, running, error, start, stop, capture }),
+    [videoRef, running, error, start, stop, capture],
+  )
 }
